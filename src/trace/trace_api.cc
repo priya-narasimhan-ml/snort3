@@ -37,8 +37,12 @@
 using namespace snort;
 
 static THREAD_LOCAL TraceLogger* g_trace_logger = nullptr;
+std::map<int, snort::TraceLogger*> g_trace_loggers;
 static THREAD_LOCAL PacketConstraints* g_packet_constraints = nullptr;
 static THREAD_LOCAL uint8_t g_constraints_generation = 0;
+
+THREAD_LOCAL uint8_t log_output_index = 100;
+THREAD_LOCAL uint8_t default_log_output_type = 100;
 
 static void update_constraints(PacketConstraints* new_cs)
 {
@@ -63,7 +67,7 @@ static inline void set_logger_options(const TraceConfig* trace_config)
     }
 }
 
-void TraceApi::thread_init(const TraceConfig* trace_config)
+/*void TraceApi::thread_init(const TraceConfig* trace_config)
 {
     if ( trace_config->logger_factory )
         g_trace_logger = trace_config->logger_factory->instantiate();
@@ -71,7 +75,30 @@ void TraceApi::thread_init(const TraceConfig* trace_config)
     set_logger_options(trace_config);
     update_constraints(trace_config->constraints);
     trace_config->setup_module_trace();
+}*/
+
+void TraceApi::thread_init(const TraceConfig* trace_config)
+{
+    default_log_output_type = trace_config->default_log_type;
+    /*if ( trace_config->logger_factory )
+        g_trace_logger = trace_config->logger_factory->instantiate();*/
+    for (auto& factory_entry : trace_config->logger_factories)
+    {
+        int output_type = factory_entry.first;
+        snort::TraceLoggerFactory* logger_factory = factory_entry.second;
+
+        // Instantiate a logger object using the factory's 'instantiate' method
+        snort::TraceLogger* logger = logger_factory->instantiate();
+
+        // Store the created logger in the global g_trace_loggers map
+        g_trace_loggers[output_type] = logger;
+    }
+
+    set_logger_options(trace_config);
+    update_constraints(trace_config->constraints);
+    trace_config->setup_module_trace();
 }
+
 
 void TraceApi::thread_term()
 {
@@ -108,7 +135,20 @@ bool TraceApi::override_logger_factory(SnortConfig* sc, TraceLoggerFactory* fact
 void TraceApi::log(const char* log_msg, const char* name,
     uint8_t log_level, const char* trace_option, const Packet* p)
 {
-    g_trace_logger->log(log_msg, name, log_level, trace_option, p);
+    /*TraceLogger* logger = nullptr;
+    if(submodule_output_type != 100)
+    {
+        logger = g_trace_loggers[submodule_output_type];
+    }else if (module_output_type != 100){
+        logger = g_trace_loggers[module_output_type];
+    }else{
+        logger = g_trace_loggers[default_log_output_type];
+    }
+    if(logger != nullptr)
+        logger->log(log_msg, name, log_level, trace_option, p);*/
+    TraceLogger* logger = g_trace_loggers[log_output_index];
+    logger->log(log_msg, name, log_level, trace_option, p);
+    //g_trace_logger->log(log_msg, name, log_level, trace_option, p);
 }
 
 void TraceApi::filter(const Packet& p)

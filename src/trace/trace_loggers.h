@@ -46,5 +46,15 @@ public:
     snort::TraceLogger* instantiate() override;
 };
 
+class MyLogLoggerFactory : public snort::TraceLoggerFactory
+{
+public:
+    MyLogLoggerFactory() = default;
+    MyLogLoggerFactory(const MyLogLoggerFactory&) = delete;
+    MyLogLoggerFactory& operator=(const MyLogLoggerFactory&) = delete;
+
+    snort::TraceLogger* instantiate() override;
+};
+
 #endif // TRACE_LOGGERS_H
 

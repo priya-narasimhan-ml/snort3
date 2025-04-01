@@ -46,6 +46,9 @@ public:
     void clear_constraints();
 
     void reset_configured_trace_options();
+    bool set_module_output(std::string module_name, uint8_t output_type);
+    bool set_module_trace_level(std::string module_name, uint8_t trace_level);
+    bool set_sub_module_output(std::string module_name, std::string submodule_name, uint8_t output);
 
     TraceConfig& get_trace_config() const
     { return trace_config; }

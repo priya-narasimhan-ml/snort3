@@ -62,6 +62,35 @@ TraceConfig::~TraceConfig()
     constraints = nullptr;
 }
 
+bool TraceConfig::set_module_output(std::string module_name, uint8_t output_type)
+{
+    for ( auto& trace : traces )
+    {
+        if ( module_name == trace.module_name() )
+            return trace.set_module_output(output_type);
+    }
+    return false;
+}
+
+bool TraceConfig::set_sub_module_output(std::string module_name, std::string sub_module_name, uint8_t output_type)
+{
+    for ( auto& trace : traces )
+    {
+        if ( module_name == trace.module_name() )
+            return trace.set_sub_module_output(sub_module_name, output_type);
+    }
+    return false;
+}
+
+bool TraceConfig::set_module_trace_level(std::string module_name, uint8_t trace_level)
+{
+    for ( auto& trace : traces )
+    {
+        if ( module_name == trace.module_name() )
+            return trace.set_module_trace_level(trace_level);
+    }
+    return false;
+}
 bool TraceConfig::set_trace(const std::string& module_name, const std::string& trace_option_name,
     uint8_t trace_level)
 {

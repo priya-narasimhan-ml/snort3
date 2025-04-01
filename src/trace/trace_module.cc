@@ -88,17 +88,32 @@ void TraceModule::generate_params()
             module_ranges.emplace_back();
             auto& module_range = module_ranges.back();
 
-            module_range.emplace_back(DEFAULT_TRACE_OPTION_NAME, Parameter::PT_INT, "0:255", nullptr,
-                "enable all trace options");
+            /*module_range.emplace_back(DEFAULT_TRACE_OPTION_NAME, Parameter::PT_INT, "0:255", nullptr,
+                "enable all trace options");*/
 
             while ( trace_options->name )
             {
-                module_range.emplace_back(trace_options->name,
+                sub_module_ranges.emplace_back();
+                auto& sub_module_range = sub_module_ranges.back();
+                sub_module_range.emplace_back("trace_level", Parameter::PT_INT, "0:255", nullptr,
+                    "trace level");
+                sub_module_range.emplace_back("output", Parameter::PT_ENUM, "stdout | syslog | mylog", nullptr,
+                    "output type");
+                /*module_range.emplace_back(trace_options->name,
                     Parameter::PT_INT, "0:255", nullptr, trace_options->help);
+
+                module_range.emplace_back(trace_options->name,
+                    Parameter::PT_INT, "0:255", nullptr, trace_options->help);*/
+                module_range.emplace_back(trace_options->name,
+                    Parameter::PT_TABLE, sub_module_range.data(), nullptr, trace_options->help);
 
                 ++trace_options;
             }
 
+            module_range.emplace_back("trace_level", Parameter::PT_INT, "0:255", nullptr,
+                "trace level");
+            module_range.emplace_back("output", Parameter::PT_ENUM, "stdout | syslog | mylog", nullptr,
+                "output type");
             module_range.emplace_back(nullptr, Parameter::PT_MAX, nullptr, nullptr, nullptr);
 
             modules_params.emplace_back(module->get_name(), Parameter::PT_TABLE, module_range.data(),
@@ -147,7 +162,7 @@ void TraceModule::generate_params()
         { "constraints", Parameter::PT_TABLE, trace_constraints_params,
           nullptr, "trace filtering constraints" },
 
-        { "output", Parameter::PT_ENUM, "stdout | syslog", nullptr,
+        { "output", Parameter::PT_ENUM, "stdout | syslog | mylog", nullptr,
           "output method for trace log messages" },
 
         { "ntuple", Parameter::PT_BOOL, nullptr, "false",
@@ -178,23 +193,108 @@ bool TraceModule::begin(const char* fqn, int, SnortConfig* sc)
     return true;
 }
 
+TraceModule::FQNResult TraceModule::parseFQN(const char* fqn) {
+    std::string str(fqn);
+    std::vector<std::string> segments;
+    std::stringstream ss(str);
+    std::string segment;
+
+    // Split the FQN into segments
+    while (std::getline(ss, segment, '.')) {
+        segments.push_back(segment);
+    }
+
+    FQNResult result;
+    int numSegments = segments.size();
+
+    if (str == "trace.output") {
+        // Top level
+        result.level = Level::TopLevel;
+        result.module = ""; // Single module at the top level
+        result.submodule = "";       // No submodule at the top level
+    } else if (numSegments == 4) {
+        // Module level
+        result.level = Level::ModuleLevel;
+        result.module = segments[2]; // Full module name
+        result.submodule = ""; // No submodule at this level
+    } else {
+        // Submodule level
+        result.level = Level::SubmoduleLevel;
+        result.module = segments[2]; // Module part (first two segments)
+        result.submodule = segments[3];   // Last module/submodule before output
+    }
+
+    return result;
+}
+
+bool TraceModule::setLogType(uint8_t output_type)
+{
+    switch ( output_type )
+    {
+        case OUTPUT_TYPE_STDOUT:
+            log_output_type = OUTPUT_TYPE_STDOUT;
+            break;
+        case OUTPUT_TYPE_SYSLOG:
+            log_output_type = OUTPUT_TYPE_SYSLOG;
+            break;
+        default:
+            return false;
+    }
+    return true;
+}
+
+void TraceModule::create_logger_factory(uint8_t output_type)
+{
+    switch ( output_type)
+        {
+            case OUTPUT_TYPE_STDOUT:
+                if (trace_parser->get_trace_config().logger_factories.find(OUTPUT_TYPE_STDOUT) == trace_parser->get_trace_config().logger_factories.end()) 
+                {
+                    // If not, create and add it to the map
+                    trace_parser->get_trace_config().logger_factories[OUTPUT_TYPE_STDOUT] = new StdoutLoggerFactory();
+                }
+                break;
+            case OUTPUT_TYPE_SYSLOG:
+                if (trace_parser->get_trace_config().logger_factories.find(OUTPUT_TYPE_SYSLOG) == trace_parser->get_trace_config().logger_factories.end()) 
+                {
+                    // If not, create and add it to the map
+                    trace_parser->get_trace_config().logger_factories[OUTPUT_TYPE_SYSLOG] = new SyslogLoggerFactory();
+                }
+                break;
+            case OUTPUT_TYPE_MYLOG:
+            if (trace_parser->get_trace_config().logger_factories.find(OUTPUT_TYPE_MYLOG) == trace_parser->get_trace_config().logger_factories.end()) 
+            {
+                // If not, create and add it to the map
+                trace_parser->get_trace_config().logger_factories[OUTPUT_TYPE_MYLOG] = new MyLogLoggerFactory();
+            }
+            break;
+            default:
+                return;
+        }
+}
 bool TraceModule::set(const char* fqn, Value& v, SnortConfig*)
 {
     if ( v.is("output") )
     {
-        switch ( v.get_uint8() )
+        FQNResult result = parseFQN(fqn);
+        switch (result.level)
         {
-            case OUTPUT_TYPE_STDOUT:
-                log_output_type = OUTPUT_TYPE_STDOUT;
+            case Level::TopLevel:
+                setLogType(v.get_uint8());
+                create_logger_factory(v.get_uint8());
                 break;
-            case OUTPUT_TYPE_SYSLOG:
-                log_output_type = OUTPUT_TYPE_SYSLOG;
+            case Level::ModuleLevel:
+                create_logger_factory(v.get_uint8());
+                return trace_parser->set_module_output(result.module, v.get_uint8());
                 break;
-            default:
-                return false;
+            case Level::SubmoduleLevel:
+                create_logger_factory(v.get_uint8());
+                return trace_parser->set_sub_module_output(result.module, result.submodule, v.get_uint8());
+                break;
         }
         return true;
     }
+    
     else if ( v.is("ntuple") )
     {
         trace_parser->get_trace_config().ntuple = v.get_bool();
@@ -221,6 +321,7 @@ bool TraceModule::end(const char* fqn, int, SnortConfig* sc)
     if ( !strcmp(fqn, "trace") )
     {
         assert(trace_parser);
+        trace_parser->get_trace_config().default_log_type = log_output_type;
 
         if ( sc->dump_config_mode() )
             trace_parser->clear_traces();
@@ -258,4 +359,3 @@ bool TraceModule::end(const char* fqn, int, SnortConfig* sc)
 
     return true;
 }
-

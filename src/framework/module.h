@@ -97,6 +97,16 @@ public:
     virtual const TraceOption* get_trace_options() const
     { return nullptr; }
 
+    virtual void set_output_type(uint8_t output_type) const
+    { }
+    virtual uint8_t get_output_type() const
+    { 
+        return 100;
+    }
+    virtual void set_sub_module_output_type(std::string sub_module_name, uint8_t output_type) const
+    { }
+    virtual void set_trace_level(uint8_t output_type) const
+    { }
     // used to match parameters with $var names like <gid:sid> for rule_state
     virtual bool matches(const char* /*param_name*/, std::string& /*lua_name*/)
     { return false; }

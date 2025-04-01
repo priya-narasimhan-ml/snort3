@@ -47,12 +47,17 @@ public:
 
     void set_trace(const Trace*) const override;
     const TraceOption* get_trace_options() const override;
+    void set_output_type(uint8_t output_type) const override;
+    void set_sub_module_output_type(std::string sub_module_name, uint8_t output_type) const override;
+    void set_trace_level(uint8_t trace_level) const override;
+    uint8_t get_output_type() const override;
 
 private:
     bool add_service_extension(snort::SnortConfig*);
 
     std::string service;
     std::vector<std::string> extend_to;
+
 };
 }
 

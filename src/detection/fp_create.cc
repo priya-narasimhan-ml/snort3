@@ -125,7 +125,7 @@ static int finalize_detection_option_tree(SnortConfig* sc, detection_option_tree
         {
             fixup_tree(root->children[i], true, 0);
 
-            trace_logf(detection_trace, TRACE_OPTION_TREE, nullptr, "%3d %3d  %p %4s\n",
+            trace_logf(detection_trace, DEFAULT_TRACE_OPTION_ID, nullptr, "%3d %3d  %p %4s\n",
                 0, root->num_children, (void*)root, "root");
 
             print_option_tree(root->children[i], 0);

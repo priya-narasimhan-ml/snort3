@@ -290,7 +290,7 @@ void* add_detection_option(SnortConfig* sc, option_type_t type, void* option_dat
 void print_option_tree(detection_option_tree_node_t* node, int level)
 {
 #ifdef DEBUG_MSGS
-    if ( !trace_enabled(detection_trace, TRACE_OPTION_TREE) )
+    if ( !trace_enabled(detection_trace, DEFAULT_TRACE_OPTION_ID) )
         return;
 
     char buf[32];
@@ -308,7 +308,7 @@ void print_option_tree(detection_option_tree_node_t* node, int level)
 
     const char* srtn = node->otn ? " (rtn)" : "";
 
-    debug_logf(detection_trace, TRACE_OPTION_TREE, nullptr, "%3d %3d  %p %*s%s\n",
+    debug_logf(detection_trace, DEFAULT_TRACE_OPTION_ID, nullptr, "%3d %3d  %p %*s%s\n",
         level+1, node->num_children, node->option_data, (int)(level + strlen(opt)), opt, srtn);
 
     for ( int i=0; i<node->num_children; i++ )

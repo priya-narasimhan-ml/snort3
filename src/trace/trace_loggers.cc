@@ -121,6 +121,31 @@ void StdoutTraceLogger::log(const char* log_msg, const char* name,
         name, trace_option, log_level, log_msg);
 }
 
+// Mylog
+
+class MyLogTraceLogger : public TraceLogger
+{
+public:
+    MyLogTraceLogger();
+
+    void log(const char* log_msg, const char* name,
+        uint8_t log_level, const char* trace_option, const Packet* p) override;
+
+private:
+    int priority;
+};
+
+MyLogTraceLogger::MyLogTraceLogger()
+    : priority(LOG_DAEMON | LOG_DEBUG)
+{ }
+
+void MyLogTraceLogger::log(const char* log_msg, const char* name,
+    uint8_t log_level, const char* trace_option, const Packet* p)
+{
+    /*syslog(priority, "%s%s:%s:%d: %s", get_ntuple(ntuple, p).c_str(),
+        name, trace_option, log_level, log_msg);*/
+}
+
 // Syslog
 
 class SyslogTraceLogger : public TraceLogger
@@ -163,4 +188,7 @@ TraceLogger* SyslogLoggerFactory::instantiate()
 {
     return new SyslogTraceLogger();
 }
-
+TraceLogger* MyLogLoggerFactory::instantiate()
+{
+    return new MyLogTraceLogger();
+}

@@ -456,6 +456,11 @@ static bool set_param(Module* mod, const char* fqn, Value& val)
 static bool set_value(const char* fqn, Value& v)
 {
     string t = fqn;
+    if (t.find("trace.modules") != std::string::npos) {
+        std::cout << "t contains 'trace.modules'" << std::endl;
+    } else if (t.find("trace.output") != std::string::npos) {
+        std::cout << "t does not contain 'trace.modules'" << std::endl;
+    }
     set_type(t);
     fqn = t.c_str();
 
@@ -1645,6 +1650,11 @@ static void load_table(string&, const Parameter*);
 
 static void load_field(string& key, const Parameter* p)
 {
+    if (key.find("trace") != std::string::npos) {
+        std::cout << "t contains 'trace'" << std::endl;
+    } else {
+        std::cout << "t does not contain 'trace'" << std::endl;
+    }    
     unsigned n = key.size();
 
     if ( p->name )

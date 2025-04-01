@@ -43,6 +43,21 @@ TraceParser::TraceParser(TraceConfig& tc)
         reset_configured_trace_options();
 }
 
+bool TraceParser::set_module_output(std::string module_name, uint8_t output_type)
+{
+    trace_config.set_module_output(module_name,output_type );
+}
+
+bool TraceParser::set_module_trace_level(std::string module_name, uint8_t trace_level)
+{
+    trace_config.set_module_trace_level(module_name,trace_level );
+}
+
+bool TraceParser::set_sub_module_output(std::string module_name, std::string submodule_name, uint8_t output)
+{
+    trace_config.set_sub_module_output(module_name,submodule_name, output );
+}
+
 bool TraceParser::set_traces(const std::string& module_name, const Value& val)
 {
     if (!s_configured_trace_options.count(module_name) 

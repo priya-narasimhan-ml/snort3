@@ -50,6 +50,8 @@ Trace::Trace(const Module& m) : module(m)
         ++trace_options;
     }
     option_levels.resize(options_size, 0);
+    output_types.resize(options_size, 0);
+    std::fill(output_types.begin(), output_types.end(), 100);
 }
 
 Trace& Trace::operator=(const Trace& other)
@@ -60,6 +62,42 @@ Trace& Trace::operator=(const Trace& other)
         options = other.options;
     }
     return *this;
+}
+
+bool Trace::set_module_output(uint8_t output_type)
+{
+    module.set_output_type(output_type);
+}
+
+const uint8_t Trace::get_logger_type(uint8_t trace_option_id) const
+{
+    const uint8_t outputtype = output_types[trace_option_id];
+    return outputtype;
+}
+
+bool Trace::set_sub_module_output(std::string sub_module_name, uint8_t output_type)
+{
+    size_t size = option_levels.size();
+    for ( size_t index = 0; index < size; ++index )
+    {
+        if ( sub_module_name == option_name(index) )
+        {
+            auto option_id = options[index].id;
+            assert(option_id < size);
+            output_types[option_id] = output_type;
+            return true;
+        }
+    }
+    return false;
+}
+bool Trace::set_module_trace_level(uint8_t trace_level)
+{
+    module.set_trace_level(trace_level);
+}
+
+uint8_t Trace::get_module_output_type() const
+{
+    return module.get_output_type();
 }
 
 bool Trace::set(const std::string& trace_option_name, uint8_t trace_level)

@@ -41,9 +41,14 @@ public:
 
     void clear();
     void clear_traces();
+    bool set_module_output(std::string module_name, uint8_t output_type);
+    bool set_module_trace_level(std::string module_name, uint8_t trace_level);
+    bool set_sub_module_output(std::string module_name,std::string submodule_name, uint8_t output );
 
 public:
     snort::TraceLoggerFactory* logger_factory = nullptr;
+    uint8_t default_log_type;
+    std::map<int, snort::TraceLoggerFactory*> logger_factories;
     snort::PacketConstraints* constraints = nullptr;
 
     bool ntuple = false;

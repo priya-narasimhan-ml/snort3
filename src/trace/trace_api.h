@@ -54,6 +54,9 @@ public:
 };
 }
 
+extern  THREAD_LOCAL uint8_t log_output_index;
+extern  THREAD_LOCAL uint8_t default_log_output_type;
+
 static inline bool trace_enabled(const snort::Trace* trace,
     TraceOptionID trace_option_id,
     TraceLevel log_level = DEFAULT_TRACE_LOG_LEVEL,
@@ -163,8 +166,19 @@ template <trace_func trace_vprintf = snort::trace_vprintf>
 static inline void trace_printf(const snort::Trace* trace,
     TraceOptionID trace_option_id, const snort::Packet* p, const char* fmt, ...)
 {
-    if ( !trace_enabled(trace, trace_option_id, DEFAULT_TRACE_LOG_LEVEL, p) )
-        return;
+    /*if ( !trace_enabled(trace, trace_option_id, DEFAULT_TRACE_LOG_LEVEL, p) )
+        return;*/
+    //snort::Trace* pq;
+    const uint8_t  sub_module_log_output_type = trace->get_logger_type(trace_option_id);
+    const uint8_t module_log_output_type = trace->get_module_output_type();
+    if(sub_module_log_output_type != 100)
+    {
+        log_output_index = sub_module_log_output_type;
+    }else if (module_log_output_type != 100){
+        log_output_index = module_log_output_type;
+    }else{
+        log_output_index = default_log_output_type;
+    }
 
     va_list ap;
     va_start(ap, fmt);
@@ -245,4 +259,3 @@ static inline void trace_print(const snort::Trace* trace, const snort::Packet* p
 #endif
 
 #endif // TRACE_API_H
-

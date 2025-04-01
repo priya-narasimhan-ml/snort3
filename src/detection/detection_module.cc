@@ -38,6 +38,8 @@
 using namespace snort;
 
 THREAD_LOCAL const Trace* detection_trace = nullptr;
+THREAD_LOCAL uint8_t output_type = 100;
+THREAD_LOCAL uint8_t trace_level = 100;
 
 static const TraceOption detection_trace_options[] =
 {
@@ -147,6 +149,26 @@ void DetectionModule::set_trace(const Trace* trace) const
 const TraceOption* DetectionModule::get_trace_options() const
 {
     return detection_trace_options;
+}
+
+void DetectionModule::set_trace_level(uint8_t tr_level) const
+{
+    trace_level = tr_level;
+}
+
+uint8_t DetectionModule::get_output_type() const
+{ 
+    return output_type;
+}
+
+void DetectionModule::set_output_type(uint8_t output) const
+{
+    output_type = output;
+}
+
+void DetectionModule::set_sub_module_output_type(std::string sub_module_name, uint8_t output) const
+{
+    
 }
 
 bool DetectionModule::begin(const char* fqn, int idx, SnortConfig* sc)

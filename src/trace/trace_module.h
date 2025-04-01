@@ -31,9 +31,20 @@ private:
     {
         OUTPUT_TYPE_STDOUT = 0,
         OUTPUT_TYPE_SYSLOG,
+        OUTPUT_TYPE_MYLOG,
         OUTPUT_TYPE_NO_INIT
     };
-
+    enum Level {
+        TopLevel,
+        ModuleLevel,
+        SubmoduleLevel
+    };
+    struct FQNResult {
+        Level level;          // Top Level, Module Level, or Submodule Level
+        std::string module;         // The main module name
+        std::string submodule;      // The submodule name (if exists)
+    };
+    
 public:
     TraceModule();
     ~TraceModule() override;
@@ -48,6 +59,9 @@ public:
 
 private:
     void generate_params();
+    FQNResult parseFQN(const char* fqn);
+    bool setLogType(uint8_t output_type);
+    void create_logger_factory(uint8_t output_type);
 
 private:
     OutputType log_output_type = OUTPUT_TYPE_NO_INIT;
@@ -55,6 +69,7 @@ private:
 
     std::vector<snort::Parameter> modules_params;
     std::vector<std::vector<snort::Parameter>> module_ranges;
+    std::vector<std::vector<snort::Parameter>> sub_module_ranges;
     std::vector<std::string> modules_help;
 
     TraceParser* trace_parser = nullptr;

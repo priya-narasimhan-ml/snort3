@@ -70,6 +70,10 @@ public:
     void set_module_trace() const;
 
     void clear();
+    bool set_module_output(uint8_t output_type);
+    bool set_sub_module_output(std::string sub_module_name, uint8_t output_type);
+    bool set_module_trace_level(uint8_t trace_level);
+    const uint8_t get_logger_type(uint8_t trace_option_id) const;
 
     const char* module_name() const
     { return mod_name.c_str(); }
@@ -86,11 +90,13 @@ public:
         return option_levels[trace_option_id] >= log_level;
     }
 
+    uint8_t get_module_output_type() const;
 private:
     std::string mod_name;
     const TraceOption* options;
     const Module& module;
     std::vector<TraceLevel> option_levels;
+    std::vector<uint8_t> output_types;
 };
 }
 
